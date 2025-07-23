@@ -1,0 +1,86 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* General Fade-in Animation */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* General Fade-in-Up Animation */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* --- NEW --- Background Pan Animation for Landing Page */
+@keyframes background-pan {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* --- NEW --- Subtle Float Animation for Images */
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
+}
+
+/* --- NEW --- Text Reveal Animation for Landing Page */
+@keyframes reveal-text {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.animate-reveal-text > span {
+  display: block;
+  animation: reveal-text 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+
+.animate-fade-in {
+  animation: fade-in 0.5s ease-out forwards;
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.6s ease-out forwards;
+}
+
+/* Staggered animation delay for children */
+.animate-delay-100 { animation-delay: 0.1s; }
+.animate-delay-200 { animation-delay: 0.2s; }
+.animate-delay-300 { animation-delay: 0.3s; }
+.animate-delay-400 { animation-delay: 0.4s; }
+.animate-delay-500 { animation-delay: 0.5s; }
+
+/* For the FAQ Accordion */
+.faq-question {
+  transition: background-color 0.3s ease;
+}
+.faq-answer {
+  transition: max-height 0.5s ease-in-out, padding 0.5s ease-in-out;
+  max-height: 0;
+  overflow: hidden;
+}
+.faq-answer.open {
+  max-height: 200px; /* Adjust as needed */
+}
+
+/* For the sticky navbar background */
+.navbar-scrolled {
+  background-color: rgba(15, 23, 42, 0.8); /* bg-slate-900 with opacity */
+  backdrop-filter: blur(10px);
+  border-bottom-color: #334155; /* border-slate-700 */
+}

@@ -85,9 +85,9 @@ function AdminDashboard() {
     setIsLoading(true);
     try {
       const [studentsRes, statsRes, adminsRes] = await Promise.all([
-        axios.get('http://localhost:5000/api/students'),
-        axios.get('http://localhost:5000/api/admin/stats'),
-        axios.get('http://localhost:5000/api/admins')
+        axios.get('https://base-platform-api.onrender.com/api/students'),
+        axios.get('https://base-platform-api.onrender.com/api/admin/stats'),
+        axios.get('https://base-platform-api.onrender.com/api/admins')
       ]);
       setStudents(studentsRes.data);
       setStats(statsRes.data);
@@ -123,7 +123,7 @@ function AdminDashboard() {
   const handleAddStudent = async (e) => {
     e.preventDefault();
     try {
-      await axios.post('http://localhost:5000/api/register', { name: studentName, email: studentEmail, password: studentPassword, batch: studentBatch, role: 'student' });
+      await axios.post('https://base-platform-api.onrender.com/api/register', { name: studentName, email: studentEmail, password: studentPassword, batch: studentBatch, role: 'student' });
       setStudentName(''); setStudentEmail(''); setStudentPassword(''); setStudentBatch('');
       fetchData();
       showToast('success', 'Student added successfully!');
@@ -137,7 +137,7 @@ function AdminDashboard() {
     e.preventDefault();
     if (!selectedStudent) return showToast('error', 'Please select a student.');
     try {
-      await axios.post('http://localhost:5000/api/records/add', { studentId: selectedStudent, type: 'mark', subject, score, date });
+      await axios.post('https://base-platform-api.onrender.com/api/records/add', { studentId: selectedStudent, type: 'mark', subject, score, date });
       setSelectedStudent(''); setSubject(''); setScore('');
       fetchData();
       showToast('success', 'Mark added successfully!');
@@ -152,10 +152,10 @@ function AdminDashboard() {
       let response;
       if (feedbackTarget === 'student') {
         if (!feedbackStudent) return showToast('error', 'Please select a student.');
-        response = await axios.post('http://localhost:5000/api/records/add', { studentId: feedbackStudent, type: 'feedback', subject: 'Teacher Feedback', score: feedbackMessage, date: new Date().toISOString().split('T')[0] });
+        response = await axios.post('https://base-platform-api.onrender.com/api/records/add', { studentId: feedbackStudent, type: 'feedback', subject: 'Teacher Feedback', score: feedbackMessage, date: new Date().toISOString().split('T')[0] });
       } else {
         if (!feedbackBatch) return showToast('error', 'Please select a batch.');
-        response = await axios.post('http://localhost:5000/api/feedback/batch', { batch: feedbackBatch, message: feedbackMessage, date: new Date().toISOString().split('T')[0] });
+        response = await axios.post('https://base-platform-api.onrender.com/api/feedback/batch', { batch: feedbackBatch, message: feedbackMessage, date: new Date().toISOString().split('T')[0] });
       }
       setFeedbackStudent(''); setFeedbackBatch(''); setFeedbackMessage('');
       fetchData();
@@ -171,10 +171,10 @@ function AdminDashboard() {
       let response;
       if (completionTarget === 'student') {
         if (!completionStudent) return showToast('error', 'Please select a student.');
-        response = await axios.post('http://localhost:5000/api/records/add', { studentId: completionStudent, type: 'completion', subject: completionSubject, score: chapterName, date: completionDate });
+        response = await axios.post('https://base-platform-api.onrender.com/api/records/add', { studentId: completionStudent, type: 'completion', subject: completionSubject, score: chapterName, date: completionDate });
       } else {
         if (!completionBatch) return showToast('error', 'Please select a batch.');
-        response = await axios.post('http://localhost:5000/api/completion/batch', { batch: completionBatch, subject: completionSubject, chapterName: chapterName, date: completionDate });
+        response = await axios.post('https://base-platform-api.onrender.com/api/completion/batch', { batch: completionBatch, subject: completionSubject, chapterName: chapterName, date: completionDate });
       }
       setCompletionStudent(''); setCompletionBatch(''); setCompletionSubject(''); setChapterName('');
       fetchData();
@@ -187,7 +187,7 @@ function AdminDashboard() {
   const handleDeleteStudent = async (studentId, studentName) => {
     if (window.confirm(`Are you sure you want to delete ${studentName}?`)) {
       try {
-        await axios.delete(`http://localhost:5000/api/student/${studentId}`);
+        await axios.delete(`https://base-platform-api.onrender.com/api/student/${studentId}`);
         showToast('success', 'Student deleted successfully.');
         fetchData();
       } catch (err) {
@@ -199,7 +199,7 @@ function AdminDashboard() {
   const handleAddNewAdmin = async (e) => {
     e.preventDefault();
     try {
-      await axios.post('http://localhost:5000/api/register', { name: newAdminName, email: newAdminEmail, password: newAdminPassword, role: 'admin' });
+      await axios.post('https://base-platform-api.onrender.com/api/register', { name: newAdminName, email: newAdminEmail, password: newAdminPassword, role: 'admin' });
       setNewAdminName(''); setNewAdminEmail(''); setNewAdminPassword('');
       fetchData();
       showToast('success', 'New admin created successfully!');
@@ -230,7 +230,7 @@ function AdminDashboard() {
   const handleEditStudent = async (e) => {
     e.preventDefault();
     try {
-      await axios.put(`http://localhost:5000/api/student/${editingStudent.id}`, editForm);
+      await axios.put(`https://base-platform-api.onrender.com/api/student/${editingStudent.id}`, editForm);
       setIsEditModalOpen(false);
       fetchData();
       showToast('success', 'Student updated successfully!');
@@ -246,7 +246,7 @@ function AdminDashboard() {
   const handleBulkAttendanceSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post('http://localhost:5000/api/attendance/batch', { attendanceData: bulkAttendanceData, date: bulkAttendanceDate });
+      await axios.post('https://base-platform-api.onrender.com/api/attendance/batch', { attendanceData: bulkAttendanceData, date: bulkAttendanceDate });
       setBulkAttendanceBatch('');
       setBulkAttendanceData({});
       fetchData();

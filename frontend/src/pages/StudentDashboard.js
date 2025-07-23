@@ -37,7 +37,7 @@ function StudentDashboard() {
     if (!currentUser?.uid) return;
     setIsLoading(true);
     try {
-      const response = await axios.get(`http://localhost:5000/api/records/${currentUser.uid}`);
+      const response = await axios.get(`https://base-platform-api.onrender.com/api/records/${currentUser.uid}`);
       setRecords(response.data.sort((a, b) => new Date(b.date) - new Date(a.date)));
     } catch (err) {
       showToast('error', 'Could not load academic records.');

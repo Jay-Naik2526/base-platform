@@ -26,7 +26,7 @@ function LoginPage() {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const idToken = await userCredential.user.getIdToken();
-      const response = await axios.post('http://localhost:5000/api/get-session-data', { idToken });
+      const response = await axios.post('https://base-platform-api.onrender.com/api/get-session-data', { idToken });
       const { user } = response.data;
       localStorage.setItem('user', JSON.stringify(user));
 

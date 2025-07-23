@@ -42,7 +42,7 @@ function ParentDashboard() {
     if (!currentUser?.studentId) return;
     setIsLoading(true);
     try {
-      const response = await axios.get(`http://localhost:5000/api/records/${currentUser.studentId}`);
+      const response = await axios.get(`https://base-platform-api.onrender.com/api/records/${currentUser.studentId}`);
       const sortedRecords = response.data.sort((a, b) => new Date(b.date) - new Date(a.date));
       setRecords(sortedRecords);
 

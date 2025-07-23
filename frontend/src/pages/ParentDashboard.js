@@ -22,11 +22,17 @@ function ParentDashboard() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [toast, setToast] = useState({ message: '', type: '' });
+  const [isMounted, setIsMounted] = useState(false);
 
-  // States for Notification Center
+  // States for Notification Center & Resource Hub
   const [notifications, setNotifications] = useState([]);
   const [hasUnread, setHasUnread] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const [resources, setResources] = useState([]);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const showToast = (type, message) => {
     setToast({ type, message });
@@ -37,9 +43,17 @@ function ParentDashboard() {
     if (!currentUser?.studentId) return;
     setIsLoading(true);
     try {
-      const response = await axios.get(`https://base-platform-api.onrender.com/api/records/${currentUser.studentId}`);
-      const sortedRecords = response.data.sort((a, b) => new Date(b.date) - new Date(a.date));
+      const [recordsRes, resourcesRes] = await Promise.all([
+        axios.get(`https://base-platform-api.onrender.com/api/records/${currentUser.studentId}`),
+        axios.get('https://base-platform-api.onrender.com/api/resources')
+      ]);
+      
+      const sortedRecords = recordsRes.data.sort((a, b) => new Date(b.date) - new Date(a.date));
       setRecords(sortedRecords);
+      
+      // Filter resources by the student's batch
+      const studentBatch = currentUser.batch;
+      setResources(resourcesRes.data.filter(r => r.batch === studentBatch));
 
       // Notification Logic
       const latestRecordTimestamp = sortedRecords.length > 0 ? new Date(sortedRecords[0].createdAt._seconds * 1000).getTime() : 0;
@@ -54,11 +68,12 @@ function ParentDashboard() {
     } finally {
       setIsLoading(false);
     }
-  }, [currentUser?.studentId, currentUser?.uid]);
+  }, [currentUser?.studentId, currentUser?.uid, currentUser?.batch]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
+        setCurrentUser(JSON.parse(localStorage.getItem('user')));
         fetchRecords();
       } else {
         navigate('/login');
@@ -66,7 +81,7 @@ function ParentDashboard() {
     });
     return () => unsubscribe();
   }, [navigate, fetchRecords]);
-
+  
   const handleNotificationClick = () => {
     setIsNotificationOpen(!isNotificationOpen);
     if (hasUnread) {
@@ -107,11 +122,6 @@ function ParentDashboard() {
 
   const getRecordsByType = (type) => records.filter(r => r.type === type);
 
-  const downloadableNotes = useMemo(() => {
-    const urlRegex = /(https?:\/\/[^\s]+)/g;
-    return records.filter(r => r.type === 'feedback' && urlRegex.test(r.score));
-  }, [records]);
-
   const SidebarButton = ({ viewName, children }) => (
     <button onClick={() => setActiveView(viewName)} className={`w-full text-left px-4 py-2 rounded-md transition-colors ${activeView === viewName ? 'bg-blue-600 text-white' : 'hover:bg-slate-700'}`}>{children}</button>
   );
@@ -121,7 +131,7 @@ function ParentDashboard() {
       <Toast message={toast.message} type={toast.type} onClose={() => setToast({ message: '', type: '' })} />
       <header className="bg-slate-800/50 backdrop-blur-sm border-b border-slate-700 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-          <h1 className="text-2xl font-bold">Parent Dashboard</h1>
+          <h1 className="text-xl sm:text-2xl font-bold">Parent Dashboard</h1>
           <div className="flex items-center gap-4">
             <div className="relative">
               <button onClick={handleNotificationClick} className="text-gray-400 hover:text-white transition-colors">
@@ -151,11 +161,8 @@ function ParentDashboard() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          {/* --- UPDATED --- Simplified animation class */}
-         <aside className="md:col-span-1 bg-slate-800/50 p-4 rounded-lg shadow-lg border border-slate-700 self-start sticky md:top-24 top-0 z-10">
-
+          <aside className="md:col-span-1 bg-slate-800/50 p-4 rounded-lg shadow-lg border border-slate-700 self-start md:sticky md:top-24 animate-fade-in-up">
             <h3 className="text-lg font-semibold mb-4">Menu</h3>
             <nav className="space-y-2">
               <SidebarButton viewName="dashboard">Dashboard</SidebarButton>
@@ -168,11 +175,11 @@ function ParentDashboard() {
             </nav>
           </aside>
 
-          {/* --- UPDATED --- Simplified animation class */}
           <div className="md:col-span-3 animate-fade-in-up animate-delay-200">
-            <h2 className="text-xl font-semibold text-gray-200 mb-2">Welcome, {currentUser?.name || 'Parent'}!</h2>
-            <p className="text-md text-gray-400 mb-6">Viewing academic records for your child.</p>
-
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+                <h2 className="text-xl sm:text-2xl font-semibold text-gray-200">Welcome, {currentUser?.name || 'Parent'}!</h2>
+            </div>
+            
             {isLoading ? <SkeletonLoader /> : (
               <>
                 {activeView === 'dashboard' && (
@@ -190,15 +197,6 @@ function ParentDashboard() {
                   </div>
                 )}
 
-                {activeView === 'resources' && (
-                  <div className="bg-slate-800/50 p-6 rounded-lg shadow-lg border border-slate-700">
-                    <h3 className="text-lg font-medium leading-6 text-white mb-4">Resource Hub (Downloadable Notes)</h3>
-                    {downloadableNotes.length > 0 ? (
-                      <ul className="divide-y divide-slate-700">{downloadableNotes.map(record => (<li key={record.id} className="py-4 flex justify-between items-center"><div><p className="text-sm text-gray-300">Note from {new Date(record.date).toLocaleDateString()}</p><p className="text-xs text-gray-500 truncate max-w-xs">{record.score}</p></div><a href={record.score.match(/(https?:\/\/[^\s]+)/g)[0]} target="_blank" rel="noopener noreferrer" className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300 text-sm">Download</a></li>))}</ul>
-                    ) : <EmptyState message="Downloadable notes and links from the teacher will appear here." />}
-                  </div>
-                )}
-
                 {activeView === 'marks' && (
                   <div className="bg-slate-800/50 p-6 rounded-lg shadow-lg border border-slate-700">
                     <h3 className="text-lg font-medium leading-6 text-white mb-4">Child's Marks</h3>
@@ -207,22 +205,38 @@ function ParentDashboard() {
                     ) : <EmptyState message="Your child's marks will appear here." />}
                   </div>
                 )}
-
+                
                 {activeView === 'attendance' && (
-                  <div className="bg-slate-800/50 p-6 rounded-lg shadow-lg border border-slate-700">
+                   <div className="bg-slate-800/50 p-6 rounded-lg shadow-lg border border-slate-700">
                     <h3 className="text-lg font-medium leading-6 text-white mb-4">Child's Attendance</h3>
                     {getRecordsByType('attendance').length > 0 ? (
                       <div className="overflow-x-auto"><table className="min-w-full divide-y divide-slate-700"><thead className="bg-slate-800"><tr><th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Date</th><th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Status</th></tr></thead><tbody className="bg-slate-900/50 divide-y divide-slate-700">{getRecordsByType('attendance').map(record => (<tr key={record.id} className="hover:bg-slate-800"><td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">{record.date}</td><td className={`px-6 py-4 whitespace-nowrap text-sm font-semibold ${record.score === 'Present' ? 'text-green-400' : 'text-red-400'}`}>{record.score}</td></tr>))}</tbody></table></div>
                     ) : <EmptyState message="Your child's attendance records will appear here." />}
                   </div>
                 )}
-
+                
                 {activeView === 'completion' && (
                   <div className="bg-slate-800/50 p-6 rounded-lg shadow-lg border border-slate-700">
                     <h3 className="text-lg font-medium leading-6 text-white mb-4">Chapter Completion</h3>
                     {getRecordsByType('completion').length > 0 ? (
                       <div className="overflow-x-auto"><table className="min-w-full divide-y divide-slate-700"><thead className="bg-slate-800"><tr><th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Date</th><th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Subject</th><th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Chapter</th></tr></thead><tbody className="bg-slate-900/50 divide-y divide-slate-700">{getRecordsByType('completion').map(record => (<tr key={record.id} className="hover:bg-slate-800"><td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">{record.date}</td><td className="px-6 py-4 whitespace-nowrap text-sm text-white">{record.subject}</td><td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">{record.score}</td></tr>))}</tbody></table></div>
                     ) : <EmptyState message="Chapter completion updates for your child will appear here." />}
+                  </div>
+                )}
+
+                {activeView === 'resources' && (
+                  <div className="bg-slate-800/50 p-6 rounded-lg shadow-lg border border-slate-700">
+                    <h3 className="text-lg font-medium leading-6 text-white mb-4">Resource Hub</h3>
+                    {resources.length > 0 ? (
+                      <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-slate-700">
+                          <thead className="bg-slate-800"><tr><th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Chapter</th><th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Subject</th><th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Link</th></tr></thead>
+                          <tbody className="bg-slate-900/50 divide-y divide-slate-700">
+                            {resources.map(r => (<tr key={r.id} className="hover:bg-slate-800"><td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">{r.chapterName}</td><td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{r.subject}</td><td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300"><a href={r.fileURL} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-500 font-semibold">Download</a></td></tr>))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : <EmptyState message="Study materials and notes from the teacher will appear here." />}
                   </div>
                 )}
 
@@ -239,8 +253,8 @@ function ParentDashboard() {
                   <div className="bg-slate-800/50 p-6 rounded-lg shadow-lg border border-slate-700">
                     <h3 className="text-lg font-medium leading-6 text-white mb-4">Change Your Password</h3>
                     <form onSubmit={handleChangePassword} className="space-y-4">
-                      <div><label className="block text-sm font-medium text-gray-300">New Password</label><input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required className="mt-1 block w-full bg-slate-700 border-slate-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500" /></div>
-                      <div><label className="block text-sm font-medium text-gray-300">Confirm New Password</label><input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required className="mt-1 block w-full bg-slate-700 border-slate-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500" /></div>
+                      <div><label className="block text-sm font-medium text-gray-300">New Password</label><input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required className="mt-1 block w-full bg-slate-700 border-slate-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500"/></div>
+                      <div><label className="block text-sm font-medium text-gray-300">Confirm New Password</label><input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required className="mt-1 block w-full bg-slate-700 border-slate-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500"/></div>
                       <button type="submit" className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 font-semibold">Update Password</button>
                     </form>
                   </div>

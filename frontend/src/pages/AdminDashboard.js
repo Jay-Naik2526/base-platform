@@ -564,19 +564,6 @@ function AdminDashboard() {
                         <button type="submit" className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 font-semibold">Add Resource</button>
                       </form>
                     </div>
-                    <div className="bg-slate-800/50 p-6 rounded-lg shadow-lg border border-slate-700">
-                      <h3 className="text-lg font-medium leading-6 text-white mb-4">Uploaded Resources</h3>
-                      {resources.length > 0 ? (
-                        <div className="overflow-x-auto">
-                          <table className="min-w-full divide-y divide-slate-700">
-                            <thead className="bg-slate-800"><tr><th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Chapter</th><th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Batch</th><th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Actions</th></tr></thead>
-                            <tbody className="bg-slate-900/50 divide-y divide-slate-700">
-                              {resources.map(r => (<tr key={r.id} className="hover:bg-slate-800"><td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">{r.chapterName}</td><td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{r.batch}</td><td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300 space-x-4"><a href={r.fileURL} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-500 font-semibold">View</a><button onClick={() => handleDeleteResource(r.id)} className="text-red-400 hover:text-red-500 font-semibold">Delete</button></td></tr>))}
-                            </tbody>
-                          </table>
-                        </div>
-                      ) : <EmptyState message="No resources have been uploaded yet." />}
-                    </div>
                   </div>
                 )}
               </>

@@ -22,16 +22,11 @@ function ParentDashboard() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [toast, setToast] = useState({ message: '', type: '' });
-  const [isMounted, setIsMounted] = useState(false);
 
   // States for Notification Center
   const [notifications, setNotifications] = useState([]);
   const [hasUnread, setHasUnread] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
 
   const showToast = (type, message) => {
     setToast({ type, message });
@@ -157,7 +152,8 @@ function ParentDashboard() {
 
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          <aside className={`md:col-span-1 bg-slate-800/50 p-4 rounded-lg shadow-lg border border-slate-700 self-start sticky top-24 transition-all duration-1000 ease-out ${isMounted ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-10'}`}>
+          {/* --- UPDATED --- Simplified animation class */}
+          <aside className="md:col-span-1 bg-slate-800/50 p-4 rounded-lg shadow-lg border border-slate-700 self-start sticky top-24 animate-fade-in-up">
             <h3 className="text-lg font-semibold mb-4">Menu</h3>
             <nav className="space-y-2">
               <SidebarButton viewName="dashboard">Dashboard</SidebarButton>
@@ -170,7 +166,8 @@ function ParentDashboard() {
             </nav>
           </aside>
 
-          <div className={`md:col-span-3 transition-all duration-1000 ease-out animate-delay-200 ${isMounted ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-10'}`}>
+          {/* --- UPDATED --- Simplified animation class */}
+          <div className="md:col-span-3 animate-fade-in-up animate-delay-200">
             <h2 className="text-xl font-semibold text-gray-200 mb-2">Welcome, {currentUser?.name || 'Parent'}!</h2>
             <p className="text-md text-gray-400 mb-6">Viewing academic records for your child.</p>
             

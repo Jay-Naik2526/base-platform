@@ -28,11 +28,13 @@ function AdminDashboard() {
   const [currentUser, setCurrentUser] = useState(JSON.parse(localStorage.getItem('user')));
   const [activeView, setActiveView] = useState('dashboard');
   const [isLoading, setIsLoading] = useState(true);
+  const [isMounted, setIsMounted] = useState(false);
 
   // Data states
   const [students, setStudents] = useState([]);
   const [admins, setAdmins] = useState([]);
   const [stats, setStats] = useState({ totalStudents: 0, recentActivity: [] });
+  const [resources, setResources] = useState([]);
   
   // Roster filter states
   const [searchTerm, setSearchTerm] = useState('');
@@ -62,6 +64,10 @@ function AdminDashboard() {
   const [newAdminPassword, setNewAdminPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [resourceBatch, setResourceBatch] = useState('');
+  const [resourceSubject, setResourceSubject] = useState('');
+  const [resourceChapter, setResourceChapter] = useState('');
+  const [resourceURL, setResourceURL] = useState('');
 
   // Edit modal states
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -73,8 +79,13 @@ function AdminDashboard() {
   const [bulkAttendanceData, setBulkAttendanceData] = useState({});
   const [bulkAttendanceDate, setBulkAttendanceDate] = useState(new Date().toISOString().split('T')[0]);
 
-  // General UI feedback
+  // UI states
   const [toast, setToast] = useState({ message: '', type: '' });
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const showToast = (type, message) => {
     setToast({ type, message });
@@ -84,14 +95,16 @@ function AdminDashboard() {
   const fetchData = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [studentsRes, statsRes, adminsRes] = await Promise.all([
+      const [studentsRes, statsRes, adminsRes, resourcesRes] = await Promise.all([
         axios.get('https://base-platform-api.onrender.com/api/students'),
         axios.get('https://base-platform-api.onrender.com/api/admin/stats'),
-        axios.get('https://base-platform-api.onrender.com/api/admins')
+        axios.get('https://base-platform-api.onrender.com/api/admins'),
+        axios.get('https://base-platform-api.onrender.com/api/resources')
       ]);
       setStudents(studentsRes.data);
       setStats(statsRes.data);
       setAdmins(adminsRes.data);
+      setResources(resourcesRes.data);
     } catch (err) {
       showToast('error', 'Could not load dashboard data.');
     } finally {
@@ -102,6 +115,7 @@ function AdminDashboard() {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
+        setCurrentUser(JSON.parse(localStorage.getItem('user')));
         fetchData();
       } else {
         navigate('/login');
@@ -255,6 +269,30 @@ function AdminDashboard() {
       showToast('error', 'Failed to mark attendance.');
     }
   };
+  
+  const handleAddResource = async (e) => {
+    e.preventDefault();
+    try {
+      await axios.post('https://base-platform-api.onrender.com/api/resources/add', { batch: resourceBatch, subject: resourceSubject, chapterName: resourceChapter, fileURL: resourceURL });
+      setResourceBatch(''); setResourceSubject(''); setResourceChapter(''); setResourceURL('');
+      fetchData();
+      showToast('success', 'Resource added successfully!');
+    } catch (err) {
+      showToast('error', 'Failed to add resource.');
+    }
+  };
+
+  const handleDeleteResource = async (resourceId) => {
+    if (window.confirm('Are you sure you want to delete this resource?')) {
+      try {
+        await axios.delete(`https://base-platform-api.onrender.com/api/resources/${resourceId}`);
+        fetchData();
+        showToast('success', 'Resource deleted.');
+      } catch (err) {
+        showToast('error', 'Failed to delete resource.');
+      }
+    }
+  };
 
   const SidebarButton = ({ viewName, children }) => (
     <button onClick={() => setActiveView(viewName)} className={`w-full text-left px-4 py-2 rounded-md transition-colors ${activeView === viewName ? 'bg-blue-600 text-white' : 'hover:bg-slate-700'}`}>{children}</button>
@@ -266,17 +304,39 @@ function AdminDashboard() {
       <header className="bg-slate-800/50 backdrop-blur-sm border-b border-slate-700 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
           <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-          <button onClick={handleLogout} className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300 text-sm">Logout</button>
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              <button onClick={() => setIsNotificationOpen(!isNotificationOpen)} className="text-gray-400 hover:text-white transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 00-5-5.917V5a1 1 0 10-2 0v.083A6 6 0 006 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
+              </button>
+              {isNotificationOpen && (
+                <div className="absolute right-0 mt-2 w-80 bg-slate-800 border border-slate-700 rounded-lg shadow-lg z-20">
+                  <div className="p-3"><h4 className="text-sm font-semibold text-white">Recent Activity</h4></div>
+                  <ul className="divide-y divide-slate-700">
+                    {stats.recentActivity.length > 0 ? stats.recentActivity.map(n => (
+                      <li key={n.id} className="p-3 text-sm">
+                        <p className="font-semibold text-blue-400">{n.type.charAt(0).toUpperCase() + n.type.slice(1)} Update</p>
+                        <p className="text-gray-300 truncate">{n.subject} - {n.score}</p>
+                        <p className="text-xs text-gray-500">{new Date(n.createdAt._seconds * 1000).toLocaleDateString()}</p>
+                      </li>
+                    )) : <li className="p-3 text-sm text-center text-gray-400">No recent activity.</li>}
+                  </ul>
+                </div>
+              )}
+            </div>
+            <button onClick={handleLogout} className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300 text-sm">Logout</button>
+          </div>
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          <aside className="md:col-span-1 bg-slate-800/50 p-4 rounded-lg shadow-lg border border-slate-700 self-start sticky top-24">
+          <aside className={`md:col-span-1 bg-slate-800/50 p-4 rounded-lg shadow-lg border border-slate-700 self-start sticky top-24 animate-fade-in-up`}>
             <h3 className="text-lg font-semibold mb-4">Menu</h3>
             <nav className="space-y-2">
               <SidebarButton viewName="dashboard">Dashboard</SidebarButton>
               <SidebarButton viewName="roster">Student Roster</SidebarButton>
+              <SidebarButton viewName="resourceHub">Resource Hub</SidebarButton>
               <SidebarButton viewName="bulkAttendance">Bulk Attendance</SidebarButton>
               <SidebarButton viewName="addStudent">Add Student</SidebarButton>
               <SidebarButton viewName="addMark">Add Mark</SidebarButton>
@@ -286,7 +346,7 @@ function AdminDashboard() {
             </nav>
           </aside>
 
-          <div className="md:col-span-3">
+          <div className={`md:col-span-3 animate-fade-in-up animate-delay-200`}>
             <h2 className="text-xl font-semibold text-gray-200 mb-6">Welcome, {currentUser?.name || 'Admin'}!</h2>
             
             {isLoading ? <SkeletonLoader /> : (
@@ -491,6 +551,34 @@ function AdminDashboard() {
                         <div><label className="block text-sm font-medium text-gray-300">Password</label><input type="password" value={newAdminPassword} onChange={(e) => setNewAdminPassword(e.target.value)} required className="mt-1 block w-full bg-slate-700 border-slate-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500"/></div>
                         <button type="submit" className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 font-semibold">Create Admin</button>
                       </form>
+                    </div>
+                  </div>
+                )}
+
+                {activeView === 'resourceHub' && (
+                  <div className="space-y-8">
+                    <div className="bg-slate-800/50 p-6 rounded-lg shadow-lg border border-slate-700">
+                      <h3 className="text-lg font-medium leading-6 text-white mb-4">Add New Resource</h3>
+                      <form onSubmit={handleAddResource} className="space-y-4">
+                        <div><label className="block text-sm font-medium text-gray-300">Batch</label><select value={resourceBatch} onChange={(e) => setResourceBatch(e.target.value)} required className="mt-1 block w-full bg-slate-700 border-slate-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500"><option value="">-- Select a Batch --</option>{uniqueBatches.map(b => <option key={b} value={b}>{b}</option>)}</select></div>
+                        <div><label className="block text-sm font-medium text-gray-300">Subject</label><input type="text" value={resourceSubject} onChange={(e) => setResourceSubject(e.target.value)} required className="mt-1 block w-full bg-slate-700 border-slate-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500"/></div>
+                        <div><label className="block text-sm font-medium text-gray-300">Chapter Name</label><input type="text" value={resourceChapter} onChange={(e) => setResourceChapter(e.target.value)} required className="mt-1 block w-full bg-slate-700 border-slate-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500"/></div>
+                        <div><label className="block text-sm font-medium text-gray-300">File URL (e.g., Google Drive link)</label><input type="url" value={resourceURL} onChange={(e) => setResourceURL(e.target.value)} required className="mt-1 block w-full bg-slate-700 border-slate-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500"/></div>
+                        <button type="submit" className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 font-semibold">Add Resource</button>
+                      </form>
+                    </div>
+                    <div className="bg-slate-800/50 p-6 rounded-lg shadow-lg border border-slate-700">
+                      <h3 className="text-lg font-medium leading-6 text-white mb-4">Uploaded Resources</h3>
+                      {resources.length > 0 ? (
+                        <div className="overflow-x-auto">
+                          <table className="min-w-full divide-y divide-slate-700">
+                            <thead className="bg-slate-800"><tr><th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Chapter</th><th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Batch</th><th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Actions</th></tr></thead>
+                            <tbody className="bg-slate-900/50 divide-y divide-slate-700">
+                              {resources.map(r => (<tr key={r.id} className="hover:bg-slate-800"><td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">{r.chapterName}</td><td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{r.batch}</td><td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300 space-x-4"><a href={r.fileURL} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-500 font-semibold">View</a><button onClick={() => handleDeleteResource(r.id)} className="text-red-400 hover:text-red-500 font-semibold">Delete</button></td></tr>))}
+                            </tbody>
+                          </table>
+                        </div>
+                      ) : <EmptyState message="No resources have been uploaded yet." />}
                     </div>
                   </div>
                 )}

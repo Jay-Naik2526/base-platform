@@ -24,6 +24,13 @@ function StudentDashboard() {
   const [toast, setToast] = useState({ message: '', type: '' });
   const [isMounted, setIsMounted] = useState(false);
 
+  // States for Notification Center
+  const [notifications, setNotifications] = useState([]);
+  const [hasUnread, setHasUnread] = useState(false);
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const [resources, setResources] = useState([]);
+
+
   useEffect(() => {
     setIsMounted(true);
   }, []);
@@ -37,18 +44,37 @@ function StudentDashboard() {
     if (!currentUser?.uid) return;
     setIsLoading(true);
     try {
-      const response = await axios.get(`https://base-platform-api.onrender.com/api/records/${currentUser.uid}`);
-      setRecords(response.data.sort((a, b) => new Date(b.date) - new Date(a.date)));
+      const [recordsRes, resourcesRes] = await Promise.all([
+        axios.get(`https://base-platform-api.onrender.com/api/records/${currentUser.uid}`),
+        axios.get('https://base-platform-api.onrender.com/api/resources')
+      ]);
+      
+      const sortedRecords = recordsRes.data.sort((a, b) => new Date(b.date) - new Date(a.date));
+      setRecords(sortedRecords);
+      
+      // Filter resources by the student's batch
+      const studentBatch = currentUser.batch;
+      setResources(resourcesRes.data.filter(r => r.batch === studentBatch));
+
+      // Notification Logic
+      const latestRecordTimestamp = sortedRecords.length > 0 ? new Date(sortedRecords[0].createdAt._seconds * 1000).getTime() : 0;
+      const lastViewedTimestamp = localStorage.getItem(`lastViewed_${currentUser.uid}`) || 0;
+      if (latestRecordTimestamp > lastViewedTimestamp) {
+        setHasUnread(true);
+      }
+      setNotifications(sortedRecords.slice(0, 5));
+
     } catch (err) {
       showToast('error', 'Could not load academic records.');
     } finally {
       setIsLoading(false);
     }
-  }, [currentUser?.uid]);
+  }, [currentUser?.uid, currentUser?.batch]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
+        setCurrentUser(JSON.parse(localStorage.getItem('user')));
         fetchRecords();
       } else {
         navigate('/login');
@@ -56,6 +82,14 @@ function StudentDashboard() {
     });
     return () => unsubscribe();
   }, [navigate, fetchRecords]);
+  
+  const handleNotificationClick = () => {
+    setIsNotificationOpen(!isNotificationOpen);
+    if (hasUnread) {
+      setHasUnread(false);
+      localStorage.setItem(`lastViewed_${currentUser.uid}`, Date.now());
+    }
+  };
 
   const averageAttendance = useMemo(() => {
     const attendanceRecords = records.filter(r => r.type === 'attendance');
@@ -99,25 +133,50 @@ function StudentDashboard() {
       <header className="bg-slate-800/50 backdrop-blur-sm border-b border-slate-700 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
           <h1 className="text-2xl font-bold">Student Dashboard</h1>
-          <button onClick={handleLogout} className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300 text-sm">Logout</button>
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              <button onClick={handleNotificationClick} className="text-gray-400 hover:text-white transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 00-5-5.917V5a1 1 0 10-2 0v.083A6 6 0 006 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                </svg>
+                {hasUnread && <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-500 ring-2 ring-slate-800"></span>}
+              </button>
+              {isNotificationOpen && (
+                <div className="absolute right-0 mt-2 w-80 bg-slate-800 border border-slate-700 rounded-lg shadow-lg z-20">
+                  <div className="p-3"><h4 className="text-sm font-semibold text-white">Recent Updates</h4></div>
+                  <ul className="divide-y divide-slate-700">
+                    {notifications.length > 0 ? notifications.map(n => (
+                      <li key={n.id} className="p-3 text-sm">
+                        <p className="font-semibold text-blue-400">{n.type.charAt(0).toUpperCase() + n.type.slice(1)} Update</p>
+                        <p className="text-gray-300 truncate">{n.subject} - {n.score}</p>
+                        <p className="text-xs text-gray-500">{new Date(n.date).toLocaleDateString()}</p>
+                      </li>
+                    )) : <li className="p-3 text-sm text-center text-gray-400">No new notifications.</li>}
+                  </ul>
+                </div>
+              )}
+            </div>
+            <button onClick={handleLogout} className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300 text-sm">Logout</button>
+          </div>
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          <aside className={`md:col-span-1 bg-slate-800/50 p-4 rounded-lg shadow-lg border border-slate-700 self-start sticky top-24 transition-all duration-1000 ease-out ${isMounted ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-10'}`}>
+          <aside className={`md:col-span-1 bg-slate-800/50 p-4 rounded-lg shadow-lg border border-slate-700 self-start sticky top-24 animate-fade-in-up`}>
             <h3 className="text-lg font-semibold mb-4">Menu</h3>
             <nav className="space-y-2">
               <SidebarButton viewName="dashboard">Dashboard</SidebarButton>
               <SidebarButton viewName="marks">My Marks</SidebarButton>
               <SidebarButton viewName="attendance">My Attendance</SidebarButton>
               <SidebarButton viewName="completion">Chapter Completion</SidebarButton>
+              <SidebarButton viewName="resources">Resource Hub</SidebarButton>
               <SidebarButton viewName="feedback">Feedback & Notes</SidebarButton>
               <SidebarButton viewName="settings">Settings</SidebarButton>
             </nav>
           </aside>
 
-          <div className={`md:col-span-3 transition-all duration-1000 ease-out animate-delay-200 ${isMounted ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-10'}`}>
+          <div className={`md:col-span-3 animate-fade-in-up animate-delay-200`}>
             <h2 className="text-xl font-semibold text-gray-200 mb-6">Welcome, {currentUser?.name || 'Student'}!</h2>
             
             {isLoading ? <SkeletonLoader /> : (
@@ -232,9 +291,25 @@ function StudentDashboard() {
                   </div>
                 )}
 
+                {activeView === 'resources' && (
+                  <div className="bg-slate-800/50 p-6 rounded-lg shadow-lg border border-slate-700">
+                    <h3 className="text-lg font-medium leading-6 text-white mb-4">Resource Hub</h3>
+                    {resources.length > 0 ? (
+                      <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-slate-700">
+                          <thead className="bg-slate-800"><tr><th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Chapter</th><th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Subject</th><th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Link</th></tr></thead>
+                          <tbody className="bg-slate-900/50 divide-y divide-slate-700">
+                            {resources.map(r => (<tr key={r.id} className="hover:bg-slate-800"><td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">{r.chapterName}</td><td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{r.subject}</td><td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300"><a href={r.fileURL} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-500 font-semibold">Download</a></td></tr>))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : <EmptyState message="Study materials and notes from your teacher will appear here." />}
+                  </div>
+                )}
+
                 {activeView === 'feedback' && (
                   <div className="bg-slate-800/50 p-6 rounded-lg shadow-lg border border-slate-700">
-                    <h3 className="text-lg font-medium leading-6 text-white mb-4">Feedback & Notes from Teacher</h3>
+                    <h3 className="text-lg font-medium leading-6 text-white mb-4">All Feedback & Notes</h3>
                     {getRecordsByType('feedback').length > 0 ? (
                       <ul className="divide-y divide-slate-700">
                         {getRecordsByType('feedback').map(record => (

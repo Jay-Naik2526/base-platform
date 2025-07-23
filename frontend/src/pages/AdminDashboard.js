@@ -28,7 +28,6 @@ function AdminDashboard() {
   const [currentUser, setCurrentUser] = useState(JSON.parse(localStorage.getItem('user')));
   const [activeView, setActiveView] = useState('dashboard');
   const [isLoading, setIsLoading] = useState(true);
-  const [isMounted, setIsMounted] = useState(false);
 
   // Data states
   const [students, setStudents] = useState([]);
@@ -82,10 +81,6 @@ function AdminDashboard() {
   // UI states
   const [toast, setToast] = useState({ message: '', type: '' });
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
 
   const showToast = (type, message) => {
     setToast({ type, message });
@@ -303,7 +298,7 @@ function AdminDashboard() {
       <Toast message={toast.message} type={toast.type} onClose={() => setToast({ message: '', type: '' })} />
       <header className="bg-slate-800/50 backdrop-blur-sm border-b border-slate-700 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-          <h1 className="text-2xl font-bold">Admin Dashboard</h1>
+          <h1 className="text-xl sm:text-2xl font-bold">Admin Dashboard</h1>
           <div className="flex items-center gap-4">
             <div className="relative">
               <button onClick={() => setIsNotificationOpen(!isNotificationOpen)} className="text-gray-400 hover:text-white transition-colors">
@@ -329,9 +324,9 @@ function AdminDashboard() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          <aside className={`md:col-span-1 bg-slate-800/50 p-4 rounded-lg shadow-lg border border-slate-700 self-start sticky top-24 animate-fade-in-up`}>
+          <aside className="md:col-span-1 bg-slate-800/50 p-4 rounded-lg shadow-lg border border-slate-700 self-start md:sticky md:top-24">
             <h3 className="text-lg font-semibold mb-4">Menu</h3>
             <nav className="space-y-2">
               <SidebarButton viewName="dashboard">Dashboard</SidebarButton>
@@ -346,13 +341,15 @@ function AdminDashboard() {
             </nav>
           </aside>
 
-          <div className={`md:col-span-3 animate-fade-in-up animate-delay-200`}>
-            <h2 className="text-xl font-semibold text-gray-200 mb-6">Welcome, {currentUser?.name || 'Admin'}!</h2>
+          <div className="md:col-span-3">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+                <h2 className="text-xl sm:text-2xl font-semibold text-gray-200">Welcome, {currentUser?.name || 'Admin'}!</h2>
+            </div>
             
             {isLoading ? <SkeletonLoader /> : (
               <>
                 {activeView === 'dashboard' && (
-                  <div className="space-y-8">
+                  <div className="space-y-8 animate-fade-in-up">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                       <div className="bg-slate-800/50 p-6 rounded-lg shadow-lg border border-slate-700">
                         <h4 className="text-gray-400 text-sm font-medium">Total Students</h4>
@@ -382,7 +379,7 @@ function AdminDashboard() {
                 )}
 
                 {activeView === 'roster' && (
-                  <div className="bg-slate-800/50 p-6 rounded-lg shadow-lg border border-slate-700">
+                  <div className="bg-slate-800/50 p-6 rounded-lg shadow-lg border border-slate-700 animate-fade-in-up">
                     <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
                       <h3 className="text-lg font-medium text-white">Student Roster</h3>
                       <div className="flex gap-2 w-full sm:w-auto">
@@ -422,7 +419,7 @@ function AdminDashboard() {
                 )}
                 
                 {activeView === 'addStudent' && (
-                  <div className="bg-slate-800/50 p-6 rounded-lg shadow-lg border border-slate-700">
+                  <div className="bg-slate-800/50 p-6 rounded-lg shadow-lg border border-slate-700 animate-fade-in-up">
                     <h3 className="text-lg font-medium leading-6 text-white mb-4">Add New Student</h3>
                     <form onSubmit={handleAddStudent} className="space-y-4">
                       <div><label className="block text-sm font-medium text-gray-300">Name</label><input type="text" value={studentName} onChange={(e) => setStudentName(e.target.value)} required className="mt-1 block w-full bg-slate-700 border-slate-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500"/></div>
@@ -435,7 +432,7 @@ function AdminDashboard() {
                 )}
 
                 {activeView === 'addMark' && (
-                   <div className="bg-slate-800/50 p-6 rounded-lg shadow-lg border border-slate-700">
+                   <div className="bg-slate-800/50 p-6 rounded-lg shadow-lg border border-slate-700 animate-fade-in-up">
                     <h3 className="text-lg font-medium leading-6 text-white mb-4">Add Student Mark</h3>
                     <form onSubmit={handleAddMark} className="space-y-4">
                        <div><label className="block text-sm font-medium text-gray-300">Select Student</label><select value={selectedStudent} onChange={(e) => setSelectedStudent(e.target.value)} required className="mt-1 block w-full bg-slate-700 border-slate-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500"><option value="">-- Select a Student --</option>{students.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}</select></div>
@@ -448,7 +445,7 @@ function AdminDashboard() {
                 )}
 
                 {activeView === 'addCompletion' && (
-                   <div className="bg-slate-800/50 p-6 rounded-lg shadow-lg border border-slate-700">
+                   <div className="bg-slate-800/50 p-6 rounded-lg shadow-lg border border-slate-700 animate-fade-in-up">
                     <h3 className="text-lg font-medium leading-6 text-white mb-4">Chapter Completion Update</h3>
                     <form onSubmit={handleAddCompletion} className="space-y-4">
                         <div className="space-y-2">
@@ -472,7 +469,7 @@ function AdminDashboard() {
                 )}
                 
                 {activeView === 'sendFeedback' && (
-                  <div className="bg-slate-800/50 p-6 rounded-lg shadow-lg border border-slate-700">
+                  <div className="bg-slate-800/50 p-6 rounded-lg shadow-lg border border-slate-700 animate-fade-in-up">
                     <h3 className="text-lg font-medium leading-6 text-white mb-4">Send Feedback / Note</h3>
                     <form onSubmit={handleSendFeedback} className="space-y-4">
                         <div className="space-y-2">
@@ -494,7 +491,7 @@ function AdminDashboard() {
                 )}
 
                 {activeView === 'bulkAttendance' && (
-                  <div className="bg-slate-800/50 p-6 rounded-lg shadow-lg border border-slate-700">
+                  <div className="bg-slate-800/50 p-6 rounded-lg shadow-lg border border-slate-700 animate-fade-in-up">
                     <h3 className="text-lg font-medium text-white mb-4">Bulk Attendance</h3>
                     <form onSubmit={handleBulkAttendanceSubmit}>
                       <div className="flex gap-4 mb-4">
@@ -525,7 +522,7 @@ function AdminDashboard() {
                 )}
                 
                 {activeView === 'settings' && (
-                  <div className="space-y-8">
+                  <div className="space-y-8 animate-fade-in-up">
                     <div className="bg-slate-800/50 p-6 rounded-lg shadow-lg border border-slate-700">
                       <h3 className="text-lg font-medium leading-6 text-white mb-4">Change Your Password</h3>
                       <form onSubmit={handleChangePassword} className="space-y-4">
@@ -556,7 +553,7 @@ function AdminDashboard() {
                 )}
 
                 {activeView === 'resourceHub' && (
-                  <div className="space-y-8">
+                  <div className="space-y-8 animate-fade-in-up">
                     <div className="bg-slate-800/50 p-6 rounded-lg shadow-lg border border-slate-700">
                       <h3 className="text-lg font-medium leading-6 text-white mb-4">Add New Resource</h3>
                       <form onSubmit={handleAddResource} className="space-y-4">

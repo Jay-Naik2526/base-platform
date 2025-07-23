@@ -66,7 +66,7 @@ function ParentDashboard() {
     });
     return () => unsubscribe();
   }, [navigate, fetchRecords]);
-  
+
   const handleNotificationClick = () => {
     setIsNotificationOpen(!isNotificationOpen);
     if (hasUnread) {
@@ -150,10 +150,12 @@ function ParentDashboard() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* --- UPDATED --- Simplified animation class */}
-          <aside className="md:col-span-1 bg-slate-800/50 p-4 rounded-lg shadow-lg border border-slate-700 self-start sticky top-24 animate-fade-in-up">
+         <aside className="md:col-span-1 bg-slate-800/50 p-4 rounded-lg shadow-lg border border-slate-700 self-start sticky md:top-24 top-0 z-10">
+
             <h3 className="text-lg font-semibold mb-4">Menu</h3>
             <nav className="space-y-2">
               <SidebarButton viewName="dashboard">Dashboard</SidebarButton>
@@ -170,7 +172,7 @@ function ParentDashboard() {
           <div className="md:col-span-3 animate-fade-in-up animate-delay-200">
             <h2 className="text-xl font-semibold text-gray-200 mb-2">Welcome, {currentUser?.name || 'Parent'}!</h2>
             <p className="text-md text-gray-400 mb-6">Viewing academic records for your child.</p>
-            
+
             {isLoading ? <SkeletonLoader /> : (
               <>
                 {activeView === 'dashboard' && (
@@ -196,7 +198,7 @@ function ParentDashboard() {
                     ) : <EmptyState message="Downloadable notes and links from the teacher will appear here." />}
                   </div>
                 )}
-                
+
                 {activeView === 'marks' && (
                   <div className="bg-slate-800/50 p-6 rounded-lg shadow-lg border border-slate-700">
                     <h3 className="text-lg font-medium leading-6 text-white mb-4">Child's Marks</h3>
@@ -205,16 +207,16 @@ function ParentDashboard() {
                     ) : <EmptyState message="Your child's marks will appear here." />}
                   </div>
                 )}
-                
+
                 {activeView === 'attendance' && (
-                   <div className="bg-slate-800/50 p-6 rounded-lg shadow-lg border border-slate-700">
+                  <div className="bg-slate-800/50 p-6 rounded-lg shadow-lg border border-slate-700">
                     <h3 className="text-lg font-medium leading-6 text-white mb-4">Child's Attendance</h3>
                     {getRecordsByType('attendance').length > 0 ? (
                       <div className="overflow-x-auto"><table className="min-w-full divide-y divide-slate-700"><thead className="bg-slate-800"><tr><th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Date</th><th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Status</th></tr></thead><tbody className="bg-slate-900/50 divide-y divide-slate-700">{getRecordsByType('attendance').map(record => (<tr key={record.id} className="hover:bg-slate-800"><td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">{record.date}</td><td className={`px-6 py-4 whitespace-nowrap text-sm font-semibold ${record.score === 'Present' ? 'text-green-400' : 'text-red-400'}`}>{record.score}</td></tr>))}</tbody></table></div>
                     ) : <EmptyState message="Your child's attendance records will appear here." />}
                   </div>
                 )}
-                
+
                 {activeView === 'completion' && (
                   <div className="bg-slate-800/50 p-6 rounded-lg shadow-lg border border-slate-700">
                     <h3 className="text-lg font-medium leading-6 text-white mb-4">Chapter Completion</h3>
@@ -237,8 +239,8 @@ function ParentDashboard() {
                   <div className="bg-slate-800/50 p-6 rounded-lg shadow-lg border border-slate-700">
                     <h3 className="text-lg font-medium leading-6 text-white mb-4">Change Your Password</h3>
                     <form onSubmit={handleChangePassword} className="space-y-4">
-                      <div><label className="block text-sm font-medium text-gray-300">New Password</label><input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required className="mt-1 block w-full bg-slate-700 border-slate-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500"/></div>
-                      <div><label className="block text-sm font-medium text-gray-300">Confirm New Password</label><input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required className="mt-1 block w-full bg-slate-700 border-slate-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500"/></div>
+                      <div><label className="block text-sm font-medium text-gray-300">New Password</label><input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required className="mt-1 block w-full bg-slate-700 border-slate-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500" /></div>
+                      <div><label className="block text-sm font-medium text-gray-300">Confirm New Password</label><input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required className="mt-1 block w-full bg-slate-700 border-slate-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500" /></div>
                       <button type="submit" className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 font-semibold">Update Password</button>
                     </form>
                   </div>

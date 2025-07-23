@@ -48,10 +48,10 @@ function StudentDashboard() {
         axios.get(`https://base-platform-api.onrender.com/api/records/${currentUser.uid}`),
         axios.get('https://base-platform-api.onrender.com/api/resources')
       ]);
-      
+
       const sortedRecords = recordsRes.data.sort((a, b) => new Date(b.date) - new Date(a.date));
       setRecords(sortedRecords);
-      
+
       // Filter resources by the student's batch
       const studentBatch = currentUser.batch;
       setResources(resourcesRes.data.filter(r => r.batch === studentBatch));
@@ -82,7 +82,7 @@ function StudentDashboard() {
     });
     return () => unsubscribe();
   }, [navigate, fetchRecords]);
-  
+
   const handleNotificationClick = () => {
     setIsNotificationOpen(!isNotificationOpen);
     if (hasUnread) {
@@ -161,9 +161,11 @@ function StudentDashboard() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          <aside className={`md:col-span-1 bg-slate-800/50 p-4 rounded-lg shadow-lg border border-slate-700 self-start sticky top-24 animate-fade-in-up`}>
+          <aside className="md:col-span-1 bg-slate-800/50 p-4 rounded-lg shadow-lg border border-slate-700 self-start sticky md:top-24 top-0 z-10">
+
             <h3 className="text-lg font-semibold mb-4">Menu</h3>
             <nav className="space-y-2">
               <SidebarButton viewName="dashboard">Dashboard</SidebarButton>
@@ -178,7 +180,7 @@ function StudentDashboard() {
 
           <div className={`md:col-span-3 animate-fade-in-up animate-delay-200`}>
             <h2 className="text-xl font-semibold text-gray-200 mb-6">Welcome, {currentUser?.name || 'Student'}!</h2>
-            
+
             {isLoading ? <SkeletonLoader /> : (
               <>
                 {activeView === 'dashboard' && (
@@ -188,7 +190,7 @@ function StudentDashboard() {
                         <h4 className="text-gray-400 text-sm font-medium">Overall Attendance</h4>
                         <p className="text-3xl font-bold">{averageAttendance}</p>
                       </div>
-                       <div className="bg-slate-800/50 p-6 rounded-lg shadow-lg border border-slate-700">
+                      <div className="bg-slate-800/50 p-6 rounded-lg shadow-lg border border-slate-700">
                         <h4 className="text-gray-400 text-sm font-medium">Total Marks Recorded</h4>
                         <p className="text-3xl font-bold">{totalMarks}</p>
                       </div>
@@ -236,9 +238,9 @@ function StudentDashboard() {
                     ) : <EmptyState message="Your marks will appear here once they are updated." />}
                   </div>
                 )}
-                
+
                 {activeView === 'attendance' && (
-                   <div className="bg-slate-800/50 p-6 rounded-lg shadow-lg border border-slate-700">
+                  <div className="bg-slate-800/50 p-6 rounded-lg shadow-lg border border-slate-700">
                     <h3 className="text-lg font-medium leading-6 text-white mb-4">My Attendance</h3>
                     {getRecordsByType('attendance').length > 0 ? (
                       <div className="overflow-x-auto">
@@ -262,7 +264,7 @@ function StudentDashboard() {
                     ) : <EmptyState message="Your attendance records will appear here." />}
                   </div>
                 )}
-                
+
                 {activeView === 'completion' && (
                   <div className="bg-slate-800/50 p-6 rounded-lg shadow-lg border border-slate-700">
                     <h3 className="text-lg font-medium leading-6 text-white mb-4">Chapter Completion</h3>
@@ -327,8 +329,8 @@ function StudentDashboard() {
                   <div className="bg-slate-800/50 p-6 rounded-lg shadow-lg border border-slate-700">
                     <h3 className="text-lg font-medium leading-6 text-white mb-4">Change Your Password</h3>
                     <form onSubmit={handleChangePassword} className="space-y-4">
-                      <div><label className="block text-sm font-medium text-gray-300">New Password</label><input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required className="mt-1 block w-full bg-slate-700 border-slate-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500"/></div>
-                      <div><label className="block text-sm font-medium text-gray-300">Confirm New Password</label><input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required className="mt-1 block w-full bg-slate-700 border-slate-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500"/></div>
+                      <div><label className="block text-sm font-medium text-gray-300">New Password</label><input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required className="mt-1 block w-full bg-slate-700 border-slate-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500" /></div>
+                      <div><label className="block text-sm font-medium text-gray-300">Confirm New Password</label><input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required className="mt-1 block w-full bg-slate-700 border-slate-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500" /></div>
                       <button type="submit" className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 font-semibold">Update Password</button>
                     </form>
                   </div>

@@ -4,25 +4,14 @@ const cors = require('cors');
 require('dotenv').config();
 const admin = require('firebase-admin');
 
-// --- UPDATED --- Initialize Firebase Admin SDK for Deployment
+// --- FINAL FIX --- Initialize Firebase Admin SDK for Deployment
 let serviceAccount;
 
-// Check if running on a deployment server (like Render)
-if (process.env.FIREBASE_PRIVATE_KEY) {
-  // If on Render, build the service account object from environment variables
-  serviceAccount = {
-    type: process.env.FIREBASE_TYPE,
-    project_id: process.env.FIREBASE_PROJECT_ID,
-    private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
-    // This is the crucial part for the multi-line private key
-    private_key: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
-    client_email: process.env.FIREBASE_CLIENT_EMAIL,
-    client_id: process.env.FIREBASE_CLIENT_ID,
-    auth_uri: process.env.FIREBASE_AUTH_URI,
-    token_uri: process.env.FIREBASE_TOKEN_URI,
-    auth_provider_x509_cert_url: process.env.FIREBASE_AUTH_PROVIDER_CERT_URL,
-    client_x509_cert_url: process.env.FIREBASE_CLIENT_CERT_URL
-  };
+// Check if the secret is in a local file or in a base64 encoded environment variable
+if (process.env.SERVICE_ACCOUNT_KEY_BASE64) {
+  // On Render, decode the base64 string to get the JSON content
+  const decodedKey = Buffer.from(process.env.SERVICE_ACCOUNT_KEY_BASE64, 'base64').toString('utf-8');
+  serviceAccount = JSON.parse(decodedKey);
 } else {
   // On your local machine, use the JSON file as before
   serviceAccount = require('./serviceAccountKey.json');
@@ -41,7 +30,6 @@ app.use(cors());
 app.use(express.json());
 
 // --- API Routes (No changes needed here) ---
-// ... (all your existing API routes like /api/register, /api/students, etc.)
 // User Registration Route
 app.post('/api/register', async (req, res) => {
     try {
